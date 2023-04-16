@@ -95,7 +95,7 @@ def load_sam_model(sam_checkpoint):
     sam_checkpoint = os.path.join(model_dir, sam_checkpoint)
     #torch.load = unsafe_torch_load
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
-    sam.to("cpu")
+    sam.to(device=device)
     sam.eval()
     #torch.load = load
     return sam
@@ -157,7 +157,9 @@ if __name__ == "__main__":
     image_np = np.array(input_image)    
     image_np_rgb = image_np[...,:3]
 
-    boxes_filt = dino_predict_internal(input_image,dino_model,"human haed neck",0.3)
+    boxes_filt = dino_predict_internal(input_image,dino_model,"eyes,neck,face",0.3)
+
+    print(type(boxes_filt))
 
     predictor.set_image(image_np_rgb)
     transformed_boxes = predictor.transform.apply_boxes_torch(boxes_filt, image_np.shape[:2])
@@ -169,25 +171,25 @@ if __name__ == "__main__":
     )
     
     masks = masks.permute(1, 0, 2, 3).cpu().numpy()
-    boxes_filt = boxes_filt.cpu().numpy().astype(int)
+    #boxes_filt = boxes_filt.cpu().numpy().astype(int)
 
     filename, ext = os.path.splitext(os.path.basename(input_image_path))
 
-    for idx, mask in enumerate(masks):
-        blended_image = show_masks(show_boxes(image_np, boxes_filt), mask)
-        merged_mask = np.any(mask, axis=0)
-        if batch_dilation_amt:
-            _, merged_mask = dilate_mask(merged_mask, batch_dilation_amt)
-        image_np_copy = copy.deepcopy(image_np)
-        image_np_copy[~merged_mask] = np.array([0, 0, 0, 0])
-        output_image = Image.fromarray(image_np_copy)
-        output_image.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_output{ext}"))
-        if dino_batch_save_mask:
-            output_mask = Image.fromarray(merged_mask)
-            output_mask.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_mask{ext}"))
-        if dino_batch_save_image_with_mask:
-            output_blend = Image.fromarray(blended_image)
-            output_blend.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_blend{ext}"))
+    #for idx, mask in enumerate(masks):
+        #blended_image = show_masks(show_boxes(image_np, boxes_filt), mask)
+    merged_mask = np.any(masks, axis=0)
+    #if batch_dilation_amt:
+    #    _, merged_mask = dilate_mask(merged_mask, batch_dilation_amt)
+    image_np_copy = copy.deepcopy(image_np)
+    image_np_copy[~merged_mask] = np.array([0, 0, 0, 0])
+    output_image = Image.fromarray(image_np_copy)
+    output_image.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_output{ext}"))
+        #if dino_batch_save_mask:
+        #    output_mask = Image.fromarray(merged_mask)
+        #    output_mask.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_mask{ext}"))
+        #if dino_batch_save_image_with_mask:
+        #    output_blend = Image.fromarray(blended_image)
+        #    output_blend.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_blend{ext}"))
     
     #if shared.cmd_opts.lowvram:
     #    sam.to("cpu")
