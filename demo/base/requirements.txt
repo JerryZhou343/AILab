@@ -1,0 +1,4 @@
+logrus
+groundingdino
+segment_anything
+gradio==3.23
