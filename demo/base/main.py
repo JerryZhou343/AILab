@@ -17,10 +17,11 @@ from groundingdino.util.utils import clean_state_dict
 from scipy.ndimage import binary_dilation
 #from modules.devices import device, torch_gc, cpu
 #from modules.safe import unsafe_torch_load, load
+#import matplotlib.pyplot as plt
 
 model_dir = "/home/jerry/workbench/download"
 dino_batch_dest_dir="/home/jerry/go/src/github.com/JerryZhou343/AILab/demo/base/" 
-input_image_path = "/home/jerry/go/src/github.com/JerryZhou343/AILab/demo/base/20230415145253.png"
+input_image_path = "/home/jerry/go/src/github.com/JerryZhou343/AILab/demo/base/20230415145253.jpg"
 device = "cpu"
 dino_batch_save_mask = True
 dino_batch_save_image_with_mask=True
@@ -140,6 +141,21 @@ def dino_predict_internal(input_image, dino_model, text_prompt, box_threshold):
     #torch_gc()
     return boxes_filt
 
+def generate_segmented_image(img, masks, scores, threshold=0.5):
+    #img = np.array(img)
+    h,w,_ = img.shape
+    segmented_image = np.zeros((h,w,3), dtype=np.uint8)
+    for i , mask in enumerate(masks):
+        mask_numpy = mask.cpu().numpy()
+        bool_mask = mask_numpy > threshold
+        instance = img.copy()
+        #for c in range(3):
+        instance[~bool_mask] = 0
+        output_file = f"instance_{i+1}.png"
+        instance_image = Image.fromarray(instance)
+        instance_image.save(output_file)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("example", add_help=True)
     #parser.add_argument("--input_image", type=str, required=True, help="path to image file")
@@ -157,44 +173,32 @@ if __name__ == "__main__":
     image_np = np.array(input_image)    
     image_np_rgb = image_np[...,:3]
 
-    boxes_filt = dino_predict_internal(input_image,dino_model,"eyes,neck,face",0.3)
+    boxes_filt = dino_predict_internal(input_image,dino_model,"human",0.3)
 
-    print(type(boxes_filt))
+    #print(type(boxes_filt))
 
     predictor.set_image(image_np_rgb)
     transformed_boxes = predictor.transform.apply_boxes_torch(boxes_filt, image_np.shape[:2])
-    masks, _, _ = predictor.predict_torch(
+    masks, score, _ = predictor.predict_torch(
         point_coords=None,
         point_labels=None,
         boxes=transformed_boxes.to(device),
-        multimask_output=(dino_batch_output_per_image == 1),
+        multimask_output=False,
     )
-    
+    print(type(masks)) 
     masks = masks.permute(1, 0, 2, 3).cpu().numpy()
-    #boxes_filt = boxes_filt.cpu().numpy().astype(int)
-
-    filename, ext = os.path.splitext(os.path.basename(input_image_path))
-
-    #for idx, mask in enumerate(masks):
+    for idx, mask in enumerate(masks):
         #blended_image = show_masks(show_boxes(image_np, boxes_filt), mask)
-    merged_mask = np.any(masks, axis=0)
-    #if batch_dilation_amt:
-    #    _, merged_mask = dilate_mask(merged_mask, batch_dilation_amt)
-    image_np_copy = copy.deepcopy(image_np)
-    image_np_copy[~merged_mask] = np.array([0, 0, 0, 0])
-    output_image = Image.fromarray(image_np_copy)
-    output_image.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_output{ext}"))
-        #if dino_batch_save_mask:
-        #    output_mask = Image.fromarray(merged_mask)
-        #    output_mask.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_mask{ext}"))
+        merged_mask = np.any(mask, axis=0)
+        #if batch_dilation_amt:
+        #    _, merged_mask = dilate_mask(merged_mask, batch_dilation_amt)
+        image_np_copy = copy.deepcopy(image_np)
+        image_np_copy[~merged_mask] = np.array([0, 0, 0, 0])
+        output_image = Image.fromarray(image_np_copy)
+        output_image.save(os.path.join(dino_batch_dest_dir, f"11_{idx}_output.png"))
+        if dino_batch_save_mask:
+            output_mask = Image.fromarray(merged_mask)
+            output_mask.save(os.path.join(dino_batch_dest_dir, f"11_{idx}_mask.png"))
         #if dino_batch_save_image_with_mask:
         #    output_blend = Image.fromarray(blended_image)
         #    output_blend.save(os.path.join(dino_batch_dest_dir, f"{filename}_{idx}_blend{ext}"))
-    
-    #if shared.cmd_opts.lowvram:
-    #    sam.to("cpu")
-    #gc.collect()
-    #torch_gc()
-    
-    #return "Done"
-                #cropped_image.save(f"path/to/your/output_{i}.jpg") 
