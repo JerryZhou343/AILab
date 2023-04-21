@@ -1,0 +1,5 @@
+log:
+ level: DEBUG
+ output: ./output
+models:
+ sam: 
