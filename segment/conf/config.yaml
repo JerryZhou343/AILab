@@ -5,4 +5,5 @@ http:
  port: 8080
  host: 0.0.0.0
 models:
- sam: 
+ sam_onnx_path: "/home/jerry/workbench/models/vit_h.onnx"
+ dino_onnx_path: "/home/jerry/workbench/models/dino.onnx"

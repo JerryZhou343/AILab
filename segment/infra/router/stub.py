@@ -3,10 +3,10 @@
 from tornado.web import Application, RequestHandler
 from tornado.routing import Rule, PathMatches, Router
 from tornado.httpserver import httputil
-from api.handler import Helloworld
+from  api.handler import *
 
 _handlers = [
-    Rule(PathMatches("/hello_world"),Helloworld)
+    Rule(PathMatches("/prompt_segment"),PromptSegment)
 ]
 
 

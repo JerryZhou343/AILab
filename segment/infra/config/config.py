@@ -30,6 +30,12 @@ class Config:
         self.log = Log()
         self.http = Http()
 
+class Models:
+    def __init__(self):
+        self.unmarshal = unmarshal.__get__(self)
+        self.sam_check_point_path = ""
+        self.dino_check_point_path = ""
+
 
 def load_config_file(path:str)->Config:
     with open(path) as f:
