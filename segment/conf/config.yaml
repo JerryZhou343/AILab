@@ -1,5 +1,8 @@
 log:
  level: DEBUG
  output: ./output
+http:
+ port: 8080
+ host: 0.0.0.0
 models:
  sam: 

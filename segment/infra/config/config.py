@@ -18,10 +18,17 @@ class Log:
     def __str__(self):
         return f"level:{self.level},output:{self.output}"
 
+class Http():
+    def __init__(self):
+        self.port = 8080
+        self.host = "127.0.0.1"
+        self.unmarshal = unmarshal.__get__(self)
+
 class Config:
     def __init__(self):
-        self.log = Log()
         self.unmarshal = unmarshal.__get__(self)
+        self.log = Log()
+        self.http = Http()
 
 
 def load_config_file(path:str)->Config:
