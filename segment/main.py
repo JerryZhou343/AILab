@@ -32,4 +32,5 @@ if __name__ == '__main__':
 	conf = load_config_file(amg_kwargs["config"])
 	if conf is None:
 		raise "load config failed"
+	print(conf.log)
 	init_logger(conf.log)
