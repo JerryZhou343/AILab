@@ -2,7 +2,7 @@
 import os
 import tornado
 from loguru import logger
-
+from app.service import ServiceInstance
 from infra.config.args import get_amg_kwargs
 from infra.config.config import Log, Config, load_config_file
 from infra.server.http import HttpServer
@@ -10,6 +10,7 @@ class App():
 	def init(self):
 		self.init_conf()
 		self.init_logger(conf=self.conf.log)
+		ServiceInstance.initializer(self.conf.models)	
 		self.init_http_server()
 	def init_conf(self):
 		amg_kwargs = get_amg_kwargs()

@@ -1,7 +1,7 @@
 # coding=utf-8
 from loguru import logger
 from tornado.web import RequestHandler
-from app import ServiceInstance
+from app.service import ServiceInstance
 
 class PromptSegment(RequestHandler):
     def post(self):

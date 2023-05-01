@@ -1,5 +1,4 @@
 loguru
 numpy
 torch
-onnxrumtime
 opencv_python

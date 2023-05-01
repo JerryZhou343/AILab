@@ -29,12 +29,15 @@ class Config:
         self.unmarshal = unmarshal.__get__(self)
         self.log = Log()
         self.http = Http()
+        self.models = Models()
 
 class Models:
     def __init__(self):
         self.unmarshal = unmarshal.__get__(self)
         self.sam_check_point_path = ""
         self.dino_check_point_path = ""
+        self.device = "cpu"
+        self.dino_conf_file=""
 
 
 def load_config_file(path:str)->Config:
