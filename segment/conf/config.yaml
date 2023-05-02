@@ -7,6 +7,6 @@ http:
 models:
  sam_check_point_path: "/home/jerry/workbench/download/sam_vit_h_4b8939.pth"
  dino_check_point_path: "/home/jerry/workbench/download/groundingdino_swinb_cogcoor.pth"
- dino_conf_file: "/infra/config/grd.cfg.py"
+ dino_conf_file: "infra/config/grd.cfg.py"
  device: cpu
  
