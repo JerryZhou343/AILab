@@ -8,7 +8,7 @@ class PromptSegment(RequestHandler):
     def post(self):
         file_path = "/home/jerry/go/src/github.com/JerryZhou343/AILab/demo/base/01.jpg"
         image_pil =  Image.open(file_path).convert("RGBA")
-        ServiceInstance.segment_by_prompt(image_pil=image_pil,prompt_text="human")
+        ServiceInstance.segment_by_prompt(image_pil=image_pil,prompt_text="human",file_path=file_path)
         self.write("hello")
         self.set_status(200)
 

@@ -10,4 +10,4 @@ models:
  dino_check_point_path: "/home/jerry/workbench/download/groundingdino_swinb_cogcoor.pth"
  dino_conf_file: "infra/config/grd.cfg.py"
  device: cpu
- mask_threshold: 0.8
+ mask_threshold: 0.3

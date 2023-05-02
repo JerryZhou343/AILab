@@ -10,7 +10,8 @@ from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
 from groundingdino.util.slconfig import SLConfig
 from infra.config.config import Models
 from infra.utils.files import check_file
-from segment_anything import sam_model_registry, SamPredictor,build_sam
+from segment_anything import build_sam,SamPredictor
+
 from segment_anything.utils.onnx import SamOnnxModel
 import onnxruntime
 from onnxruntime.quantization import QuantType
@@ -24,7 +25,7 @@ class ApplicationService():
         self.config = config
         #self.build_dion_model_from_pth(config)
         self.build_sam_model(self.config)
-        self.build_dion_model(self.config)
+        self.build_dino_model(self.config)
 
 
     def build_sam_model(self,config:Models):
@@ -40,19 +41,23 @@ class ApplicationService():
 
         sam_checkpoint = config.sam_check_point_path 
         sam = build_sam(checkpoint=sam_checkpoint)
-        self.sam_model = sam.to(device=config.device)
+        sam.to(device=config.device)
+        sam.eval()
+        self.sam_model = sam
 
-    def segment_by_prompt(self,image_pil,prompt_text):
+    def segment_by_prompt(self,image_pil,prompt_text,file_path):
+        if not check_file(file_path):
+            logger.fatal(f"not find file{file_path}")   
         #1. dino 生成 prompt box
-        boxes = self.prompt_mask(prompt_text,image_pil,self.config.mask_threshold)
+        boxes_filt = self.get_prompt_mask(prompt_text,image_pil,self.config.mask_threshold)
 
         #2. prompt box input to sam,get boxes
-        masks = self.segment_image(image_pil,boxes)
+        masks = self.segment_image(image_pil,boxes_filt)
         #3. output 
-        return self.create_mask_out(masks,boxes)
+        return self.create_mask_out(masks,boxes_filt)
  
 
-    def build_dion_model(self,config:Models):
+    def build_dino_model(self,config:Models):
         ''''''
         dino_conf_file = os.path.join(sys.path[0],config.dino_conf_file)
         logger.info(f"load config file path:{dino_conf_file}")
@@ -69,27 +74,31 @@ class ApplicationService():
         _ = model.eval()
         self.dino_model = model 
 
-    def prompt_mask(self,prompt_text,image_pil,box_threshold):
+    def get_prompt_mask(self,prompt_text,image_pil,box_threshold):
         # 转换 dino image
         dino_image = self.load_dino_image(image_pil.convert("RGB"))
+        
         # 提示词获得 mask prompt
         boxes_filt = self.get_grounding_output(dino_image, prompt_text, box_threshold)
+
         # 转换边框
         H, W = image_pil.size[1], image_pil.size[0]
         for i in range(boxes_filt.size(0)):
             boxes_filt[i] = boxes_filt[i] * torch.Tensor([W, H, W, H])
             boxes_filt[i][:2] -= boxes_filt[i][2:] / 2
             boxes_filt[i][2:] += boxes_filt[i][:2]
+
+
         return boxes_filt
 
     def segment_image(self,image_pil,boxes_filt):
         ''''''
         image_np = np.array(image_pil)
-            
+
         image_np_rgb = image_np[...,:3]
         # 图片预处理
         predictor = SamPredictor(self.sam_model)
-
+        logger.info(f"rgb:{image_np_rgb.shape}, device:{self.config.device}, {boxes_filt}")
         predictor.set_image(image_np_rgb)
         #
         transformed_boxes = predictor.transform.apply_boxes_torch(boxes_filt, image_np.shape[:2])
