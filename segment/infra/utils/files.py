@@ -1,5 +1,6 @@
 #coding=utf-8
 
+import os
 
 def check_file(file_name:str)->bool:
     if not os.path.exists(file_name):

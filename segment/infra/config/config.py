@@ -34,7 +34,7 @@ class Config:
 class Models:
     def __init__(self):
         self.unmarshal = unmarshal.__get__(self)
-        self.sam_check_point_path = ""
+        self.sam_onnx_path = ""
         self.dino_check_point_path = ""
         self.device = "cpu"
         self.dino_conf_file=""

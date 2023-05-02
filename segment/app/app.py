@@ -9,14 +9,28 @@ from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
 from groundingdino.util.slconfig import SLConfig
 from infra.config.config import Models
 from infra.utils.files import check_file
+from segment_anything import sam_model_registry, SamPredictor
+from segment_anything.utils.onnx import SamOnnxModel
+import onnxruntime
+from onnxruntime.quantization import QuantType
+from onnxruntime.quantization.quantize import quantize_dynamic
 
 
 class ApplicationService():
     def initializer(self, config:Models):
-        self.build_dion_model_from_pth(config)
+        #self.build_dion_model_from_pth(config)
+        self.build_sam_model_from_pth(config)
 
-    def build_sam_model_from_pth(self,path:str):
-        pass
+
+    def build_sam_model_from_pth(self,config:Models):
+        #self.sam_onnx_model = SamOnnxModel(config.sam_onnx_path,return_single_mask=True)
+        onnx_file_path = os.path.join(sys.path[0],config.sam_onnx_path)
+        if not check_file(onnx_file_path):
+            logger.fatal(f"onnx model not exits. path:{onnx_file_path}")
+
+        self.ort_session = onnxruntime.InferenceSession(onnx_file_path)
+
+
     def build_dion_model_from_pth(self,config:Models):
         ''''''
         dino_conf_file = os.path.join(sys.path[0],config.dino_conf_file)
