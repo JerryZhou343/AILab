@@ -2,3 +2,9 @@ loguru
 numpy
 torch
 opencv_python
+piexif
+segment_anything
+groundingdino
+onnxruntime
+PIL
+cv2

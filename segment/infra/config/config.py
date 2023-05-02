@@ -40,6 +40,7 @@ class Models:
         self.device = "cpu"
         self.dino_conf_file=""
         self.mask_threshold = 0.6
+        self.samples_format="png"
 
 
 def load_config_file(path:str)->Config:

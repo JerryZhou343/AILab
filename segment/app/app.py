@@ -23,7 +23,7 @@ class ApplicationService():
     def initializer(self, config:Models):
         self.config = config
         #self.build_dion_model_from_pth(config)
-        self.build_sam_model_from_pth(self.config)
+        self.build_sam_model(self.config)
         self.build_dion_model(self.config)
 
 
@@ -42,17 +42,14 @@ class ApplicationService():
         sam = build_sam(checkpoint=sam_checkpoint)
         self.sam_model = sam.to(device=config.device)
 
-    def segment_by_prompt(self,input_image,prompt_text):
+    def segment_by_prompt(self,image_pil,prompt_text):
         #1. dino 生成 prompt box
-        image_pl = self.load_dino_image(input_image)
-
-        boxes = self.prompt_mask(prompt_text,image_pl,self.config.mask_threshold)
+        boxes = self.prompt_mask(prompt_text,image_pil,self.config.mask_threshold)
 
         #2. prompt box input to sam,get boxes
-        masks = self.segment_image(image_pl,boxes)
+        masks = self.segment_image(image_pil,boxes)
         #3. output 
-        self.create_mask_out(masks,boxes)
-        pass
+        return self.create_mask_out(masks,boxes)
  
 
     def build_dion_model(self,config:Models):
@@ -72,30 +69,31 @@ class ApplicationService():
         _ = model.eval()
         self.dino_model = model 
 
-    def prompt_mask(self,prompt_text,input_image,box_threshold):
-        dino_image = self.load_dino_image(input_image.convert("RGB"))
-
-        boxes_filt = self.get_grounding_output(
-            self.dino_model, dino_image, prompt_text, box_threshold
-        )
-        H, W = input_image.size[1], input_image.size[0]
+    def prompt_mask(self,prompt_text,image_pil,box_threshold):
+        # 转换 dino image
+        dino_image = self.load_dino_image(image_pil.convert("RGB"))
+        # 提示词获得 mask prompt
+        boxes_filt = self.get_grounding_output(dino_image, prompt_text, box_threshold)
+        # 转换边框
+        H, W = image_pil.size[1], image_pil.size[0]
         for i in range(boxes_filt.size(0)):
             boxes_filt[i] = boxes_filt[i] * torch.Tensor([W, H, W, H])
             boxes_filt[i][:2] -= boxes_filt[i][2:] / 2
             boxes_filt[i][2:] += boxes_filt[i][:2]
         return boxes_filt
 
-    def segment_image(self,input_image,boxes_filt):
+    def segment_image(self,image_pil,boxes_filt):
         ''''''
-        image_np = np.array(input_image)    
+        image_np = np.array(image_pil)
+            
         image_np_rgb = image_np[...,:3]
-
+        # 图片预处理
         predictor = SamPredictor(self.sam_model)
 
         predictor.set_image(image_np_rgb)
-
+        #
         transformed_boxes = predictor.transform.apply_boxes_torch(boxes_filt, image_np.shape[:2])
-
+        # 处理
         masks, score, _ = predictor.predict_torch(
         point_coords=None,
         point_labels=None,
@@ -113,10 +111,10 @@ class ApplicationService():
             image_np_copy = copy.deepcopy(image_np)
             image_np_copy[~np.any(mask, axis=0)] = np.array([0, 0, 0, 0])
             matted_images.append(Image.fromarray(image_np_copy))
-        return mask_images + masks_gallery + matted_images
+        return mask_images , masks_gallery , matted_images
 
 
-    def load_dino_image(image_pil):
+    def load_dino_image(self,image_pil):
         transform = T.Compose(
             [
                 T.RandomResize([800], max_size=1333),
