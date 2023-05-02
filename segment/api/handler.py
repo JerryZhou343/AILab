@@ -7,4 +7,10 @@ class PromptSegment(RequestHandler):
     def post(self):
         self.write("hello")
         self.set_status(200)
-        ServiceInstance.initializer()
+
+
+
+
+class InactiveSegment(RequestHandler):
+    def post(self):
+        pass

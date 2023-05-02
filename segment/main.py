@@ -12,11 +12,16 @@ class App():
 		self.init_logger(conf=self.conf.log)
 		ServiceInstance.initializer(self.conf.models)	
 		self.init_http_server()
+
+
+
 	def init_conf(self):
 		amg_kwargs = get_amg_kwargs()
 		self.conf = load_config_file(amg_kwargs["config"])
 		if self.conf is None:
 			raise "load config failed"
+
+
 
 	def init_logger(self,conf: Log):
 		logger.add(os.path.join(conf.output,"segment.log"),level=conf.level,rotation='1 week',retention=5,
@@ -35,6 +40,9 @@ class App():
 		logger.info('                       ')
 		logger.info('tornado version',tornado.version_info)
 
+
+
+
 	def init_http_server(self):
 		self.http = HttpServer(self.conf.http)
 
@@ -46,4 +54,5 @@ class App():
 if __name__ == '__main__':
 	app = App()
 	app.init()
+	logger.info("init finish")
 	app.run()
