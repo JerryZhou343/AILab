@@ -32,3 +32,6 @@ def NewContext():
     ret = Context()
     ret.set(generate_trace_id())
     return ret
+
+def NewContextFromHeader():
+    pass

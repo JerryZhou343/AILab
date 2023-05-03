@@ -45,9 +45,7 @@ class ApplicationService():
         sam.eval()
         self.sam_model = sam
 
-    def segment_by_prompt(self,image_pil,prompt_text,file_path):
-        if not check_file(file_path):
-            logger.fatal(f"not find file{file_path}")   
+    def segment_by_prompt(self,image_pil,prompt_text):
         #1. dino 生成 prompt box
         boxes_filt = self.get_prompt_mask(prompt_text,image_pil,self.config.mask_threshold)
 

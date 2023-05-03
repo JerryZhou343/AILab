@@ -8,3 +8,4 @@ groundingdino
 onnxruntime
 PIL
 cv2
+fastapi
