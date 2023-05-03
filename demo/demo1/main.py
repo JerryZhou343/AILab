@@ -44,6 +44,7 @@ def get_grounding_output(model, image, caption, box_threshold):
     return boxes_filt.cpu()
 
 def dino_predict_internal(input_image, dino_model, text_prompt, box_threshold):
+    '''阈值过高可能导致无法检测到对象'''
     dino_image = load_dino_image(input_image.convert("RGB"))
 
     boxes_filt = get_grounding_output(

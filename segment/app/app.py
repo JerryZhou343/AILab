@@ -52,9 +52,9 @@ class ApplicationService():
         boxes_filt = self.get_prompt_mask(prompt_text,image_pil,self.config.mask_threshold)
 
         #2. prompt box input to sam,get boxes
-        masks = self.segment_image(image_pil,boxes_filt)
+        masks,score = self.segment_image(image_pil,boxes_filt)
         #3. output 
-        return self.create_mask_out(masks,boxes_filt)
+        return self.create_mask_out(image_pil,masks,boxes_filt)
  
 
     def build_dino_model(self,config:Models):
@@ -77,7 +77,7 @@ class ApplicationService():
     def get_prompt_mask(self,prompt_text,image_pil,box_threshold):
         # 转换 dino image
         dino_image = self.load_dino_image(image_pil.convert("RGB"))
-        
+
         # 提示词获得 mask prompt
         boxes_filt = self.get_grounding_output(dino_image, prompt_text, box_threshold)
 
@@ -93,12 +93,12 @@ class ApplicationService():
 
     def segment_image(self,image_pil,boxes_filt):
         ''''''
-        image_np = np.array(image_pil)
+        image_np = np.array(image_pil.convert("RGBA"))
 
         image_np_rgb = image_np[...,:3]
         # 图片预处理
         predictor = SamPredictor(self.sam_model)
-        logger.info(f"rgb:{image_np_rgb.shape}, device:{self.config.device}, {boxes_filt}")
+        logger.info(f"device:{self.config.device}, boxes: {boxes_filt}")
         predictor.set_image(image_np_rgb)
         #
         transformed_boxes = predictor.transform.apply_boxes_torch(boxes_filt, image_np.shape[:2])
@@ -108,9 +108,11 @@ class ApplicationService():
         point_labels=None,
         boxes=transformed_boxes.to(self.config.device),
         multimask_output=False)
+        masks = masks.permute(1, 0, 2, 3).cpu().numpy()
         return masks,score
 
-    def create_mask_out(image_np, masks, boxes_filt):
+    def create_mask_out(self,image_pil, masks, boxes_filt):
+        image_np = np.array(image_pil.convert("RGBA"))
         mask_images, masks_gallery, matted_images = [], [], []
         boxes_filt = boxes_filt.numpy().astype(int) if boxes_filt is not None else None
         for mask in masks:
