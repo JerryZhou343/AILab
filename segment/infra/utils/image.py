@@ -46,17 +46,17 @@ def encode_pil_to_base64(image,img_fmt):
                 if isinstance(key, str) and isinstance(value, str):
                     metadata.add_text(key, value)
                     use_metadata = True
-            image.save(output_bytes, format="PNG", pnginfo=(metadata if use_metadata else None), quality="hight")
+            image.save(output_bytes, format="PNG", pnginfo=(metadata if use_metadata else None), quality=95)
 
         elif img_fmt.lower() in ("jpg", "jpeg", "webp"):
             parameters = image.info.get('parameters', None)
             exif_bytes = piexif.dump({
-                "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(parameters or "", encoding=100) }
+                "Exif": { piexif.ExifIFD.UserComment: piexif.helper.UserComment.dump(parameters or "", encoding="unicode") }
             })
             if img_fmt.lower() in ("jpg", "jpeg"):
-                image.save(output_bytes, format="JPEG", exif = exif_bytes, quality=100)
+                image.save(output_bytes, format="JPEG", exif = exif_bytes, quality=95)
             else:
-                image.save(output_bytes, format="WEBP", exif = exif_bytes, quality=100)
+                image.save(output_bytes, format="WEBP", exif = exif_bytes, quality=95)
 
         else:
             raise Exception(status_code=500, detail="Invalid image format")

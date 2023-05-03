@@ -5,6 +5,7 @@ from app.service import ServiceInstance
 from infra.utils.image import decode_to_pil,encode_to_base64
 from infra.utils.codes import unmarshal
 import json
+import os
 
 class PromptSegmentArgs(object):
     def __init__(self):
@@ -18,7 +19,7 @@ class PromptSegmentArgs(object):
         if len(self.prompt_text) == 0:
             self.prompt_text = "human"
         if len(self.format) == 0:
-            self.format = "jpg"
+            self.format = "png"
 
 
 
@@ -32,8 +33,9 @@ class PromptSegment(RequestHandler):
             mask_images,masks_gallery,  matted_images = ServiceInstance.segment_by_prompt(image_pil=image_pil,prompt_text = self.args.prompt_text)
             ret_mask_images, ret_masks_gallery, ret_matted_images = [],[],[]
         
-            for m in mask_images:
-                ret_mask_images.append(encode_to_base64(m,self.args.format))
+            for idx, mask in enumerate(mask_images):
+                ret_mask_images.append(encode_to_base64(mask,self.args.format))
+                #mask.save("./output/",f"{idx}.{self.args.format}")
 
             for  m in masks_gallery:
                 ret_masks_gallery.append(encode_to_base64(m,self.args.format))
@@ -46,6 +48,7 @@ class PromptSegment(RequestHandler):
                 "mask_gallery":ret_masks_gallery,
                 "matted_images":ret_matted_images
             }
+            
             self.write(json.dumps(rsp))
         #TODO(JerryZhou): 精细化错误处理
         except Exception as e:
